@@ -1,0 +1,28 @@
+{
+  "system": "simple",
+  "split": "test",
+  "settings": {
+    "ollama_base_url": "http://localhost:11434",
+    "llm_model": "qwen3:4b-instruct",
+    "embed_model": "bge-m3",
+    "judge_model": "qwen3:8b",
+    "verifier_model": "",
+    "chunk_size": 1024,
+    "chunk_overlap": 128,
+    "top_k": 5,
+    "temperature": 0.0,
+    "context_window": 8192,
+    "max_new_tokens": 512,
+    "request_timeout": 600.0,
+    "embed_batch_size": 16,
+    "max_sources": 5,
+    "max_chunks_per_article": 2,
+    "max_revisions": 2
+  },
+  "prompt_version": "rag-v1",
+  "agents_prompt_version": null,
+  "judge": "qwen3:8b",
+  "judge_prompt_version": "juge-v2",
+  "git_commit": "cbc02a8",
+  "started_at": "2026-10-24T23:37:31"
+}

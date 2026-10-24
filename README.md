@@ -95,6 +95,13 @@ Sur les 48 questions avec réponse des jeux dev et test réunis, l'écart d'exac
 
 Détails : `notebooks/03_evaluation_baseline.ipynb` (référence), `notebooks/04_multi_agents.ipynb` (mise au point des agents sur le jeu dev), `notebooks/05_comparaison_finale.ipynb` (jeu test) et `results/`.
 
+### Expériences complémentaires (MLflow)
+
+Les 13 évaluations du dossier `results/` sont enregistrées dans MLflow avec leurs paramètres, leurs métriques par type de question et les réponses en artefacts (`notebooks/06_suivi_mlflow.ipynb`).
+
+- **Grille sur le RAG simple** (jeu dev) : tailles de chunks de 256, 512 et 1024 tokens, et 3, 5 ou 8 passages. Les chunks de 1024 tokens obtiennent la meilleure exactitude selon le juge (0,91 contre 0,84). **Confirmée une seule fois sur le jeu test, cette avance disparaît** : exactitude relue de 0,94 dans les deux cas. La configuration actuelle, plus légère, est conservée.
+- **Ablation des agents** (jeu dev) : sans vérificateur, l'exactitude est identique et le temps de réponse divisé par deux ; avec un vérificateur `qwen3:8b`, l'exactitude est aussi identique, mais le vérificateur valide 3 corrections sur 9 et sépare mieux les bonnes réponses des douteuses, pour une latence 1,5 fois plus élevée.
+
 ### Limites
 
 - Jeu d'évaluation réduit (48 questions avec réponse) : seuls des écarts importants sont détectables.
@@ -163,7 +170,7 @@ python scripts/ask.py "Quelles sont les conditions du droit à l'effacement ?" -
 python scripts/ask.py "Quelles obligations en cas de violation de données ?" --system agents --show-trace
 python scripts/evaluate.py --split dev --limit 3
 python scripts/log_mlflow.py
-mlflow ui --backend-store-uri sqlite:///mlflow.db
+mlflow ui --backend-store-uri sqlite:///mlflow.db --workers 1
 pytest
 ```
 
@@ -180,6 +187,6 @@ Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · Fa
 - [x] Jeu de questions de test et évaluation de référence
 - [x] Système multi-agents (chercheur, rédacteur, vérificateur)
 - [x] Comparaison RAG simple / multi-agents
-- [ ] Suivi des expériences avec MLflow
+- [x] Suivi des expériences avec MLflow
 - [ ] API FastAPI et interface Streamlit
 - [ ] Conteneurisation Docker et intégration continue
