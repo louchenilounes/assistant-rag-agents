@@ -81,5 +81,7 @@ def test_log_results_dir_replaces_previous_run(tmp_path):
     assert list(runs["run_id"]) == [run_id]
     assert runs.loc[0, "metrics.ensemble.exactitude_relue"] == 1.0
     assert runs.loc[0, "params.settings.top_k"] == "5"
+    experiment = mlflow.get_experiment(runs.loc[0, "experiment_id"])
+    assert experiment.tags["mlflow.experimentKind"] == "custom_model_development"
     artifacts = {item.path for item in mlflow.MlflowClient().list_artifacts(run_id)}
     assert artifacts == {"answers.jsonl", "config.json", "revue_humaine.csv"}

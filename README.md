@@ -117,7 +117,8 @@ assistant-rag-agents/
 │   ├── 02_rag_simple.ipynb
 │   ├── 03_evaluation_baseline.ipynb
 │   ├── 04_multi_agents.ipynb
-│   └── 05_comparaison_finale.ipynb
+│   ├── 05_comparaison_finale.ipynb
+│   └── 06_suivi_mlflow.ipynb
 ├── results/                   Réponses et métriques de chaque évaluation
 ├── scripts/
 │   ├── check_documents.py     Contrôle de la présence et du découpage des documents

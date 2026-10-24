@@ -14,6 +14,8 @@ from assistant_rag.evaluation.runner import ANSWERS_FILE, load_records
 
 CONFIG_FILE = "config.json"
 REVIEW_FILE = "revue_humaine.csv"
+EXPERIMENT_KIND_TAG = "mlflow.experimentKind"
+EXPERIMENT_KIND = "custom_model_development"
 
 
 def tracking_uri(db_path: Path = MLFLOW_DB) -> str:
@@ -24,10 +26,13 @@ def setup_experiment(db_path: Path = MLFLOW_DB, artifacts_dir: Path = MLFLOW_ART
     """Configure MLflow sur une base SQLite locale et renvoie l'identifiant de l'expérience."""
     mlflow.set_tracking_uri(tracking_uri(db_path))
     experiment = mlflow.get_experiment_by_name(MLFLOW_EXPERIMENT)
-    if experiment is not None:
-        return experiment.experiment_id
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
-    return mlflow.create_experiment(MLFLOW_EXPERIMENT, artifact_location=artifacts_dir.resolve().as_uri())
+    if experiment is None:
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        experiment_id = mlflow.create_experiment(MLFLOW_EXPERIMENT, artifact_location=artifacts_dir.resolve().as_uri())
+    else:
+        experiment_id = experiment.experiment_id
+    mlflow.MlflowClient().set_experiment_tag(experiment_id, EXPERIMENT_KIND_TAG, EXPERIMENT_KIND)
+    return experiment_id
 
 
 def run_params(config: dict) -> dict[str, str]:
