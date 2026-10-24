@@ -1,4 +1,4 @@
-from assistant_rag.citations import REFUSAL, is_refusal, parse_citations, strip_thinking
+from assistant_rag.citations import REFUSAL, is_refusal, is_refused_answer, parse_citations, strip_thinking
 
 
 def test_parse_citations_reads_single_and_grouped_numbers():
@@ -27,3 +27,8 @@ def test_is_refusal_detects_expected_sentence():
     assert is_refusal(f"« {REFUSAL} »")
     assert is_refusal(REFUSAL.upper())
     assert not is_refusal("Le RGPD s'applique aux données personnelles [1].")
+
+
+def test_partial_answer_with_citations_is_not_a_refusal():
+    assert is_refused_answer(REFUSAL, source_count=5)
+    assert not is_refused_answer(f"Le délai est de 72 heures [1]. {REFUSAL}", source_count=5)

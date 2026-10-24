@@ -12,6 +12,8 @@ class AgentState(TypedDict, total=False):
     queries: list[str]
     sources: list[Source]
     draft: str
+    first_draft: str
+    first_sources: list[Source]
     verdict: str
     problems: list[str]
     searches: list[str]

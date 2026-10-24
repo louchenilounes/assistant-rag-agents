@@ -8,7 +8,7 @@ from llama_index.core.llms import LLM, ChatMessage
 from llama_index.core.schema import NodeWithScore
 from llama_index.llms.ollama import Ollama
 
-from assistant_rag.citations import is_refusal, parse_citations, strip_thinking
+from assistant_rag.citations import is_refused_answer, parse_citations, strip_thinking
 from assistant_rag.config import Settings
 from assistant_rag.indexing import get_index
 from assistant_rag.prompts import SYSTEM_PROMPT
@@ -137,7 +137,7 @@ class SimpleRAG:
         start = time.perf_counter()
         sources = self.retrieve(question)
         text = self.generate(question, sources)
-        refused = is_refusal(text)
+        refused = is_refused_answer(text, len(sources))
         return Answer(
             question=question,
             text=text,

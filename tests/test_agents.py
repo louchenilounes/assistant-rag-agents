@@ -218,3 +218,36 @@ def test_answer_without_citation_is_sent_back_to_the_writer(retriever):
     assert answer.trace[0]["requetes"] == ["Question ?"]
     assert answer.trace[2]["problemes"] == ["La réponse ne cite aucun extrait."]
     assert answer.text == "Réponse citée [1]."
+
+
+def test_first_draft_is_kept_when_corrections_do_not_converge(retriever):
+    system, _ = make_system(
+        retriever,
+        {
+            RESEARCHER: ['{"sous_questions": ["Amende ?"]}'],
+            WRITER: ["Première réponse [1].", "Deuxième réponse [1].", "Troisième réponse [1]."],
+            VERIFIER: ['{"verdict": "a_corriger", "problemes": ["Erreur."]}'],
+        },
+    )
+
+    answer = system.answer("Amende ?")
+
+    assert answer.text == "Première réponse [1]."
+    assert answer.verified is False
+
+
+def test_partial_answer_ending_with_refusal_sentence_is_verified(retriever):
+    system, _ = make_system(
+        retriever,
+        {
+            RESEARCHER: ['{"sous_questions": ["Notification ?", "Sanctions ?"]}'],
+            WRITER: [f"La notification intervient en 72 heures [1]. {REFUSAL}"],
+            VERIFIER: ['{"verdict": "valide"}'],
+        },
+    )
+
+    answer = system.answer("Notification et sanctions ?")
+
+    assert not answer.refused
+    assert answer.cited == [1]
+    assert answer.trace[-1]["verdict"] == "valide"

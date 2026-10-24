@@ -10,9 +10,14 @@ from langgraph.graph import END, START, StateGraph
 from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.llms import LLM
 
-from assistant_rag.agents.prompts import RESEARCHER_PROMPT, REVISION_INSTRUCTIONS, VERIFIER_PROMPT
+from assistant_rag.agents.prompts import (
+    COVERAGE_INSTRUCTIONS,
+    RESEARCHER_PROMPT,
+    REVISION_INSTRUCTIONS,
+    VERIFIER_PROMPT,
+)
 from assistant_rag.agents.state import AgentState
-from assistant_rag.citations import is_refusal, parse_citations
+from assistant_rag.citations import is_refused_answer, parse_citations
 from assistant_rag.config import Settings
 from assistant_rag.indexing import get_index
 from assistant_rag.prompts import SYSTEM_PROMPT
@@ -115,16 +120,20 @@ class Writer:
         prompt = build_user_prompt(state["question"], state["sources"])
         sub_questions = state.get("sub_questions", [])
         if len(sub_questions) > 1:
-            prompt += "\n\nAspects à traiter :\n" + "\n".join(f"- {sub}" for sub in sub_questions)
+            aspects = "\n".join(f"- {sub}" for sub in sub_questions)
+            prompt += "\n\n" + COVERAGE_INSTRUCTIONS.format(aspects=aspects)
         if state.get("problems"):
             problems = "\n".join(f"- {problem}" for problem in state["problems"])
             prompt += "\n\n" + REVISION_INSTRUCTIONS.format(draft=state["draft"], problems=problems)
         draft = chat(self.llm, SYSTEM_PROMPT, prompt)
-        return {
+        update = {
             "draft": draft,
             "llm_calls": state.get("llm_calls", 0) + 1,
             "trace": [{"agent": "rédacteur", "reponse": draft}],
         }
+        if "first_draft" not in state:
+            update.update(first_draft=draft, first_sources=state["sources"])
+        return update
 
 
 class Verifier:
@@ -135,7 +144,7 @@ class Verifier:
 
     def __call__(self, state: AgentState) -> dict:
         draft, sources = state["draft"], state["sources"]
-        if is_refusal(draft):
+        if is_refused_answer(draft, len(sources)):
             return {"verdict": "refus", "problems": [], "trace": [{"agent": "vérificateur", "verdict": "refus"}]}
 
         prompt = (
@@ -186,9 +195,15 @@ def build_graph(researcher: Researcher, writer: Writer, verifier: Verifier, max_
 
 
 class AgentsRAG:
-    """Système multi-agents avec la même interface que le RAG simple."""
+    """Système multi-agents avec la même interface que le RAG simple.
+
+    Si le vérificateur rejette encore la réponse après le nombre maximal de corrections,
+    la première réponse est conservée et marquée comme non vérifiée : des corrections
+    qui ne convergent pas ne garantissent pas une meilleure réponse.
+    """
 
     def __init__(self, retriever: BaseRetriever, llm: LLM, json_llm: LLM, settings: Settings):
+        self.max_revisions = settings.max_revisions
         self.graph = build_graph(
             Researcher(retriever, json_llm, settings), Writer(llm), Verifier(json_llm), settings.max_revisions
         )
@@ -203,7 +218,9 @@ class AgentsRAG:
         start = time.perf_counter()
         state = self.graph.invoke({"question": question, "revisions": 0, "llm_calls": 0, "trace": []})
         text, sources = state["draft"], state["sources"]
-        refused = is_refusal(text)
+        if state["revisions"] > self.max_revisions:
+            text, sources = state["first_draft"], state["first_sources"]
+        refused = is_refused_answer(text, len(sources))
         return Answer(
             question=question,
             text=text,

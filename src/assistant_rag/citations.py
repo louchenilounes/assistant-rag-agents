@@ -31,3 +31,12 @@ def is_refusal(text: str) -> bool:
     """Indique si la réponse est un refus de répondre faute d'information dans les sources."""
     normalized = " ".join(text.lower().split())
     return REFUSAL.lower().rstrip(".") in normalized
+
+
+def is_refused_answer(text: str, source_count: int) -> bool:
+    """Réponse entièrement refusée : phrase de refus sans aucune citation.
+
+    Une réponse qui traite une partie de la question avec des citations puis signale
+    qu'un aspect n'est pas couvert reste une réponse, évaluée comme telle.
+    """
+    return is_refusal(text) and not parse_citations(text, source_count)
