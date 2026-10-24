@@ -1,0 +1,33 @@
+id,verdict_juge,verdict_humain,commentaire
+rgpd-01,correct,correct,
+rgpd-02,correct,correct,
+rgpd-04,correct,correct,
+rgpd-05,correct,correct,
+rgpd-06,correct,correct,
+rgpd-08,correct,correct,
+rgpd-09,correct,correct,
+rgpd-11,incorrect,incorrect,"Montant de 20 000 000 EUR au lieu de 10 000 000 EUR ; la version corrigée par le rédacteur était juste, mais la première réponse a été conservée faute de validation."
+rgpd-12,partiel,correct,La durée de quatre ans répond à la question ; l'exception transitoire est un détail.
+rgpd-14,correct,correct,
+rgpd-15,correct,correct,
+rgpd-17,correct,correct,
+aiact-01,correct,correct,
+aiact-02,correct,correct,
+aiact-04,correct,correct,
+aiact-05,correct,correct,
+aiact-06,correct,correct,
+aiact-08,correct,correct,
+aiact-09,correct,correct,
+aiact-11,correct,correct,
+aiact-12,correct,correct,
+aiact-14,partiel,correct,La condition jugée ajoutée figure bien dans l'article 86.
+aiact-16,partiel,partiel,"Date générale exacte, exceptions omises."
+aiact-18,partiel,correct,Exact ; le numéro de l'organisme notifié est une précision exacte de l'article 48.
+multi-01,correct,correct,
+multi-03,correct,correct,
+multi-04,partiel,partiel,Attribue les catégories de données au cas de collecte directe.
+multi-06,incorrect,correct,"« Oui, à condition que l'article 9, paragraphe 2, point a) ou g), s'applique » a le même sens que la référence."
+multi-07,partiel,partiel,"Montant exact de 35 000 000 EUR et amendes des modèles à usage général exactes, mais les amendes de l'article 100 (institutions de l'Union) sont présentées comme celles des opérateurs."
+multi-08,correct,correct,
+multi-10,correct,correct,
+multi-11,correct,partiel,Règle du RGPD exacte grâce à l'article 9 retrouvé ; une seule des interdictions biométriques de l'AI Act est citée.

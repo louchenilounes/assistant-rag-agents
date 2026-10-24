@@ -68,6 +68,8 @@ Les évaluations tournent sur GPU dans un notebook Kaggle (`kaggle/evaluation_ka
 
 ## Résultats
 
+### RAG simple (jeu dev)
+
 RAG simple évalué sur les 40 questions du jeu **dev** (`qwen3:4b-instruct`, `bge-m3`, chunks de 512 tokens, k = 5), sur GPU T4 :
 
 | Métrique | Factuelles | Multi-articles | Ensemble |
@@ -82,6 +84,23 @@ Les 8 questions hors corpus sont toutes refusées ; une seule question avec rép
 
 Point faible identifié : les questions qui combinent deux articles, pour lesquelles un des articles manque parmi les passages retrouvés dans 3 cas sur 8. C'est la cible du système multi-agents.
 
+### Système multi-agents (jeu dev)
+
+Comparaison sur les 40 questions du jeu **dev**, dans les mêmes conditions (même modèle, même index, même juge) :
+
+| Métrique | RAG simple | Agents |
+| --- | --- | --- |
+| Rappel@5, questions multi-articles | 81 % | 94 % |
+| Rappel des citations, questions multi-articles | 81 % | 94 % |
+| Exactitude relue, questions factuelles | 0,94 | 0,94 |
+| Exactitude relue, questions multi-articles | 0,75 | 0,81 |
+| Exactitude relue, ensemble | 0,89 | 0,91 |
+| Refus correct (hors corpus) | 100 % | 100 % |
+| Appels au LLM par question | 1 | 3,3 |
+| Latence médiane sur GPU T4 | 4,4 s | 7,0 s |
+
+La recherche par sous-question améliore la couverture des questions qui combinent plusieurs articles. L'écart global d'exactitude n'est pas significatif sur 32 questions. Avec un modèle de 4 milliards de paramètres, le vérificateur ne corrige aucune réponse de façon fiable mais signale les réponses douteuses. La première version des agents, moins bonne que le RAG simple, et son analyse sont détaillées dans `notebooks/04_multi_agents.ipynb`.
+
 ## Structure du projet
 
 ```
@@ -94,7 +113,8 @@ assistant-rag-agents/
 ├── notebooks/
 │   ├── 01_exploration_documents.ipynb
 │   ├── 02_rag_simple.ipynb
-│   └── 03_evaluation_baseline.ipynb
+│   ├── 03_evaluation_baseline.ipynb
+│   └── 04_multi_agents.ipynb
 ├── results/                   Réponses et métriques de chaque évaluation
 ├── scripts/
 │   ├── check_documents.py     Contrôle de la présence et du découpage des documents
