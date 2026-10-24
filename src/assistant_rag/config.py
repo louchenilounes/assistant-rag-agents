@@ -1,11 +1,13 @@
-"""Configuration centrale du projet : chemins et documents sources."""
+"""Configuration centrale du projet : chemins, documents sources et paramètres du RAG."""
 
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT_DIR / "data"
 RAW_DIR = DATA_DIR / "raw"
+STORAGE_DIR = ROOT_DIR / "storage"
 
 
 @dataclass(frozen=True)
@@ -42,3 +44,29 @@ DOCUMENTS: dict[str, SourceDocument] = {
         expected_articles=113,
     ),
 }
+
+
+def _env(name: str, default: str) -> str:
+    return os.environ.get(name, default)
+
+
+@dataclass(frozen=True)
+class Settings:
+    """Paramètres du RAG, modifiables par variables d'environnement."""
+
+    ollama_base_url: str = field(default_factory=lambda: _env("OLLAMA_BASE_URL", "http://localhost:11434"))
+    llm_model: str = field(default_factory=lambda: _env("LLM_MODEL", "qwen3:4b-instruct"))
+    embed_model: str = field(default_factory=lambda: _env("EMBED_MODEL", "bge-m3"))
+    chunk_size: int = field(default_factory=lambda: int(_env("CHUNK_SIZE", "512")))
+    chunk_overlap: int = field(default_factory=lambda: int(_env("CHUNK_OVERLAP", "64")))
+    top_k: int = field(default_factory=lambda: int(_env("TOP_K", "5")))
+    temperature: float = 0.0
+    context_window: int = 4096
+    max_new_tokens: int = 512
+    request_timeout: float = 600.0
+    embed_batch_size: int = 16
+
+    @property
+    def index_dir(self) -> Path:
+        model = self.embed_model.replace(":", "-").replace("/", "-")
+        return STORAGE_DIR / f"{model}_c{self.chunk_size}_o{self.chunk_overlap}"
