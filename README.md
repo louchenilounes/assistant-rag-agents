@@ -123,7 +123,8 @@ assistant-rag-agents/
 │   ├── check_documents.py     Contrôle de la présence et du découpage des documents
 │   ├── build_index.py         Construction de l'index vectoriel
 │   ├── ask.py                 Question en ligne de commande
-│   └── evaluate.py            Évaluation sur le jeu de questions
+│   ├── evaluate.py            Évaluation sur le jeu de questions
+│   └── log_mlflow.py          Enregistrement des évaluations dans MLflow
 ├── src/assistant_rag/
 │   ├── config.py              Chemins, corpus et paramètres
 │   ├── extraction.py          Extraction du texte, nettoyage, découpage en articles
@@ -133,7 +134,8 @@ assistant-rag-agents/
 │   ├── citations.py           Lecture des citations [n]
 │   ├── rag.py                 RAG simple
 │   ├── agents/                Chercheur, rédacteur, vérificateur et graphe LangGraph
-│   └── evaluation/            Jeu de questions, métriques, LLM-juge, exécution
+│   ├── evaluation/            Jeu de questions, métriques, LLM-juge, exécution
+│   └── tracking.py            Suivi des expériences avec MLflow
 └── tests/                     Tests unitaires (pytest)
 ```
 
@@ -159,10 +161,12 @@ python scripts/build_index.py
 python scripts/ask.py "Quelles sont les conditions du droit à l'effacement ?" --show-context
 python scripts/ask.py "Quelles obligations en cas de violation de données ?" --system agents --show-trace
 python scripts/evaluate.py --split dev --limit 3
+python scripts/log_mlflow.py
+mlflow ui --backend-store-uri sqlite:///mlflow.db
 pytest
 ```
 
-Les paramètres se modifient par variables d'environnement : `LLM_MODEL`, `EMBED_MODEL`, `JUDGE_MODEL`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`, `OLLAMA_BASE_URL`.
+Les paramètres se modifient par variables d'environnement : `LLM_MODEL`, `EMBED_MODEL`, `JUDGE_MODEL`, `VERIFIER_MODEL`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`, `CONTEXT_WINDOW`, `OLLAMA_BASE_URL`.
 
 ## Stack technique
 

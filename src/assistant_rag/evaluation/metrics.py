@@ -72,17 +72,23 @@ def score_records(records: list[dict]) -> pd.DataFrame:
     return pd.DataFrame([score_record(record) for record in records])
 
 
-def summarize(records: list[dict]) -> pd.DataFrame:
-    """Tableau des métriques par type de question et sur l'ensemble des questions."""
+def summary_by_type(records: list[dict]) -> pd.DataFrame:
+    """Métriques moyennes par type de question et sur l'ensemble, avec les noms internes des métriques."""
     scores = score_records(records)
     metrics = [name for name in METRIC_LABELS if name != "questions"]
-    groups = {label: scores[scores["type"] == key] for key, label in GROUP_LABELS.items()}
-    groups["Ensemble"] = scores
+    groups = {key: scores[scores["type"] == key] for key in GROUP_LABELS}
+    groups["ensemble"] = scores
     rows = {}
-    for label, frame in groups.items():
+    for key, frame in groups.items():
         if frame.empty:
             continue
         row = {"questions": len(frame)}
         row.update({name: pd.to_numeric(frame[name], errors="coerce").mean() for name in metrics})
-        rows[label] = row
-    return pd.DataFrame.from_dict(rows, orient="index").rename(columns=METRIC_LABELS)
+        rows[key] = row
+    return pd.DataFrame.from_dict(rows, orient="index")
+
+
+def summarize(records: list[dict]) -> pd.DataFrame:
+    """Tableau des métriques par type de question et sur l'ensemble des questions, avec des libellés lisibles."""
+    labels = {**GROUP_LABELS, "ensemble": "Ensemble"}
+    return summary_by_type(records).rename(index=labels, columns=METRIC_LABELS)

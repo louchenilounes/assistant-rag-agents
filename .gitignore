@@ -8,3 +8,4 @@ storage/
 mlruns/
 mlartifacts/
 .env
+mlflow.db

@@ -10,6 +10,9 @@ RAW_DIR = DATA_DIR / "raw"
 STORAGE_DIR = ROOT_DIR / "storage"
 RESULTS_DIR = ROOT_DIR / "results"
 QUESTIONS_PATH = DATA_DIR / "eval" / "questions.jsonl"
+MLFLOW_DB = ROOT_DIR / "mlflow.db"
+MLFLOW_ARTIFACTS = ROOT_DIR / "mlartifacts"
+MLFLOW_EXPERIMENT = "assistant-rag"
 INDEX_VERSION = 2
 
 
@@ -61,11 +64,12 @@ class Settings:
     llm_model: str = field(default_factory=lambda: _env("LLM_MODEL", "qwen3:4b-instruct"))
     embed_model: str = field(default_factory=lambda: _env("EMBED_MODEL", "bge-m3"))
     judge_model: str = field(default_factory=lambda: _env("JUDGE_MODEL", "qwen3:8b"))
+    verifier_model: str = field(default_factory=lambda: _env("VERIFIER_MODEL", ""))
     chunk_size: int = field(default_factory=lambda: int(_env("CHUNK_SIZE", "512")))
     chunk_overlap: int = field(default_factory=lambda: int(_env("CHUNK_OVERLAP", "64")))
     top_k: int = field(default_factory=lambda: int(_env("TOP_K", "5")))
     temperature: float = 0.0
-    context_window: int = 6144
+    context_window: int = field(default_factory=lambda: int(_env("CONTEXT_WINDOW", "6144")))
     max_new_tokens: int = 512
     request_timeout: float = 600.0
     embed_batch_size: int = 16

@@ -171,8 +171,11 @@ class Verifier:
         }
 
 
-def build_graph(researcher: Researcher, writer: Writer, verifier: Verifier, max_revisions: int):
-    """Chercheur → rédacteur → vérificateur, avec retour au rédacteur ou au chercheur si nécessaire."""
+def build_graph(researcher: Researcher, writer: Writer, verifier: Verifier | None, max_revisions: int):
+    """Chercheur → rédacteur → vérificateur, avec retour au rédacteur ou au chercheur si nécessaire.
+
+    Sans vérificateur, la réponse du rédacteur est renvoyée directement.
+    """
 
     def route(state: AgentState) -> str:
         if state["revisions"] > max_revisions:
@@ -186,11 +189,14 @@ def build_graph(researcher: Researcher, writer: Writer, verifier: Verifier, max_
     graph = StateGraph(AgentState)
     graph.add_node("chercheur", researcher)
     graph.add_node("redacteur", writer)
-    graph.add_node("verificateur", verifier)
     graph.add_edge(START, "chercheur")
     graph.add_edge("chercheur", "redacteur")
-    graph.add_edge("redacteur", "verificateur")
-    graph.add_conditional_edges("verificateur", route, ["chercheur", "redacteur", END])
+    if verifier is None:
+        graph.add_edge("redacteur", END)
+    else:
+        graph.add_node("verificateur", verifier)
+        graph.add_edge("redacteur", "verificateur")
+        graph.add_conditional_edges("verificateur", route, ["chercheur", "redacteur", END])
     return graph.compile()
 
 
@@ -202,17 +208,31 @@ class AgentsRAG:
     qui ne convergent pas ne garantissent pas une meilleure réponse.
     """
 
-    def __init__(self, retriever: BaseRetriever, llm: LLM, json_llm: LLM, settings: Settings):
+    def __init__(
+        self,
+        retriever: BaseRetriever,
+        llm: LLM,
+        json_llm: LLM,
+        settings: Settings,
+        verifier_llm: LLM | None = None,
+        use_verifier: bool = True,
+    ):
         self.max_revisions = settings.max_revisions
+        self.use_verifier = use_verifier
+        verifier = Verifier(verifier_llm or json_llm) if use_verifier else None
         self.graph = build_graph(
-            Researcher(retriever, json_llm, settings), Writer(llm), Verifier(json_llm), settings.max_revisions
+            Researcher(retriever, json_llm, settings), Writer(llm), verifier, settings.max_revisions
         )
 
     @classmethod
-    def from_settings(cls, settings: Settings | None = None) -> "AgentsRAG":
+    def from_settings(cls, settings: Settings | None = None, use_verifier: bool = True) -> "AgentsRAG":
         settings = settings or Settings()
         retriever = get_index(settings).as_retriever(similarity_top_k=settings.top_k)
-        return cls(retriever, build_llm(settings), build_llm(settings, json_mode=True), settings)
+        json_llm = build_llm(settings, json_mode=True)
+        verifier_llm = json_llm
+        if settings.verifier_model:
+            verifier_llm = build_llm(replace(settings, llm_model=settings.verifier_model), json_mode=True)
+        return cls(retriever, build_llm(settings), json_llm, settings, verifier_llm, use_verifier)
 
     def answer(self, question: str) -> Answer:
         start = time.perf_counter()
@@ -229,6 +249,6 @@ class AgentsRAG:
             refused=refused,
             latency=time.perf_counter() - start,
             llm_calls=state["llm_calls"],
-            verified=state["verdict"] in ("valide", "refus"),
+            verified=state["verdict"] in ("valide", "refus") if self.use_verifier else None,
             trace=state["trace"],
         )

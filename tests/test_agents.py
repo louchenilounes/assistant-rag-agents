@@ -251,3 +251,33 @@ def test_partial_answer_ending_with_refusal_sentence_is_verified(retriever):
     assert not answer.refused
     assert answer.cited == [1]
     assert answer.trace[-1]["verdict"] == "valide"
+
+
+def test_agents_without_verifier_return_the_first_draft(retriever):
+    llm = RoleLLM(
+        replies={RESEARCHER: ['{"sous_questions": ["Amende ?"]}'], WRITER: ["Amende [1]."], VERIFIER: ["{}"]},
+        prompts=[],
+    )
+    system = AgentsRAG(retriever, llm, llm, Settings(max_sources=3), use_verifier=False)
+
+    answer = system.answer("Amende ?")
+
+    assert [step["agent"] for step in answer.trace] == ["chercheur", "rédacteur"]
+    assert answer.llm_calls == 2
+    assert answer.verified is None
+    assert not any(VERIFIER in prompt for prompt in llm.prompts)
+
+
+def test_verifier_can_use_a_dedicated_model(retriever):
+    llm = RoleLLM(
+        replies={RESEARCHER: ['{"sous_questions": ["Amende ?"]}'], WRITER: ["Amende [1]."], VERIFIER: ["{}"]},
+        prompts=[],
+    )
+    verifier_llm = RoleLLM(replies={VERIFIER: ['{"verdict": "valide"}']}, prompts=[])
+    system = AgentsRAG(retriever, llm, llm, Settings(max_sources=3), verifier_llm=verifier_llm)
+
+    answer = system.answer("Amende ?")
+
+    assert answer.verified is True
+    assert len(verifier_llm.prompts) == 1
+    assert not any(VERIFIER in prompt for prompt in llm.prompts)

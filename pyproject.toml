@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "assistant-rag"
-version = "0.4.0"
+version = "0.6.0"
 description = "Assistant multi-agents de questions-réponses sur documents avec citation des sources"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,6 +15,7 @@ dependencies = [
     "llama-index-llms-ollama>=0.11,<0.12",
     "llama-index-embeddings-ollama>=0.10,<0.11",
     "langgraph>=1.2,<2",
+    "mlflow>=3.0,<4",
 ]
 
 [tool.setuptools.packages.find]
@@ -22,6 +23,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+filterwarnings = ["ignore:The ``noload`` loader strategy is deprecated:DeprecationWarning"]
 
 [tool.ruff]
 line-length = 120

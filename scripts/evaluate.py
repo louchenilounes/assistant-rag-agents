@@ -5,6 +5,7 @@ import json
 import subprocess
 from dataclasses import asdict
 from datetime import datetime
+from functools import partial
 
 import pandas as pd
 
@@ -18,7 +19,11 @@ from assistant_rag.evaluation.runner import run_evaluation
 from assistant_rag.prompts import PROMPT_VERSION
 from assistant_rag.rag import SimpleRAG
 
-SYSTEMS = {"simple": SimpleRAG, "agents": AgentsRAG}
+SYSTEMS = {
+    "simple": SimpleRAG.from_settings,
+    "agents": AgentsRAG.from_settings,
+    "agents-sans-verificateur": partial(AgentsRAG.from_settings, use_verifier=False),
+}
 
 
 def git_commit() -> str | None:
@@ -50,7 +55,7 @@ def main() -> None:
             "split": args.split,
             "settings": asdict(settings),
             "prompt_version": PROMPT_VERSION,
-            "agents_prompt_version": AGENTS_PROMPT_VERSION if args.system == "agents" else None,
+            "agents_prompt_version": AGENTS_PROMPT_VERSION if args.system.startswith("agents") else None,
             "judge": None if args.no_judge else settings.judge_model,
             "judge_prompt_version": None if args.no_judge else JUDGE_PROMPT_VERSION,
             "git_commit": git_commit(),
@@ -58,7 +63,7 @@ def main() -> None:
         }
         config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    system = SYSTEMS[args.system].from_settings(settings)
+    system = SYSTEMS[args.system](settings)
     judge = None if args.no_judge else Judge(build_judge_llm(settings))
     records = run_evaluation(system, questions, output_dir, judge)
 

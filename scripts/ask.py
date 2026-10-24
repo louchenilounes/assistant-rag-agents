@@ -5,7 +5,7 @@ import argparse
 from assistant_rag.agents.graph import AgentsRAG
 from assistant_rag.rag import SimpleRAG
 
-SYSTEMS = {"simple": SimpleRAG, "agents": AgentsRAG}
+SYSTEMS = {"simple": SimpleRAG.from_settings, "agents": AgentsRAG.from_settings}
 
 
 def main() -> None:
@@ -16,7 +16,7 @@ def main() -> None:
     parser.add_argument("--show-trace", action="store_true", help="affiche les étapes des agents")
     args = parser.parse_args()
 
-    answer = SYSTEMS[args.system].from_settings().answer(args.question)
+    answer = SYSTEMS[args.system]().answer(args.question)
     print(answer.format())
     if args.show_context:
         print("\nPassages retrouvés :")
