@@ -72,9 +72,14 @@ class Answer:
         return [source for source in self.sources if source.number in self.cited]
 
     def format(self) -> str:
+        """Réponse suivie de ses sources, les passages d'un même article étant regroupés sur une ligne."""
+        grouped: dict[str, list[int]] = {}
+        for source in self.cited_sources:
+            grouped.setdefault(source.label, []).append(source.number)
         lines = [self.text]
-        if self.cited_sources:
-            lines += ["", "Sources :"] + [f"[{source.number}] {source.label}" for source in self.cited_sources]
+        if grouped:
+            lines += ["", "Sources :"]
+            lines += [f"[{', '.join(map(str, numbers))}] {label}" for label, numbers in grouped.items()]
         return "\n".join(lines)
 
 

@@ -1,10 +1,10 @@
-from assistant_rag.config import STORAGE_DIR, Settings
+from assistant_rag.config import INDEX_VERSION, STORAGE_DIR, Settings
 
 
 def test_index_dir_depends_on_embedding_and_chunking():
     settings = Settings(embed_model="bge-m3:latest", chunk_size=256, chunk_overlap=32)
 
-    assert settings.index_dir == STORAGE_DIR / "bge-m3-latest_c256_o32"
+    assert settings.index_dir == STORAGE_DIR / f"bge-m3-latest_c256_o32_v{INDEX_VERSION}"
 
 
 def test_settings_read_environment(monkeypatch):

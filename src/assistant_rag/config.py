@@ -8,6 +8,9 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT_DIR / "data"
 RAW_DIR = DATA_DIR / "raw"
 STORAGE_DIR = ROOT_DIR / "storage"
+RESULTS_DIR = ROOT_DIR / "results"
+QUESTIONS_PATH = DATA_DIR / "eval" / "questions.jsonl"
+INDEX_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -57,6 +60,7 @@ class Settings:
     ollama_base_url: str = field(default_factory=lambda: _env("OLLAMA_BASE_URL", "http://localhost:11434"))
     llm_model: str = field(default_factory=lambda: _env("LLM_MODEL", "qwen3:4b-instruct"))
     embed_model: str = field(default_factory=lambda: _env("EMBED_MODEL", "bge-m3"))
+    judge_model: str = field(default_factory=lambda: _env("JUDGE_MODEL", "qwen3:8b"))
     chunk_size: int = field(default_factory=lambda: int(_env("CHUNK_SIZE", "512")))
     chunk_overlap: int = field(default_factory=lambda: int(_env("CHUNK_OVERLAP", "64")))
     top_k: int = field(default_factory=lambda: int(_env("TOP_K", "5")))
@@ -69,4 +73,4 @@ class Settings:
     @property
     def index_dir(self) -> Path:
         model = self.embed_model.replace(":", "-").replace("/", "-")
-        return STORAGE_DIR / f"{model}_c{self.chunk_size}_o{self.chunk_overlap}"
+        return STORAGE_DIR / f"{model}_c{self.chunk_size}_o{self.chunk_overlap}_v{INDEX_VERSION}"

@@ -83,3 +83,29 @@ def test_clean_pages_collapses_multiple_spaces():
     pages = [Page("test", 1, "ou  le   droit d'un État")]
 
     assert clean_pages(pages, boilerplate=set())[0].text == "ou le droit d'un État"
+
+
+def test_split_articles_joins_title_written_on_two_lines():
+    text = "Article premier\nInformations à fournir lorsque les données\nn'ont pas été collectées\n1. Texte."
+
+    (article,) = split_articles([Page("test", 1, text)])
+
+    assert article.title == "Informations à fournir lorsque les données n'ont pas été collectées"
+    assert article.text == "1. Texte."
+
+
+def test_split_articles_removes_footnotes():
+    text = "\n".join(
+        [
+            "Article premier",
+            "Principes",
+            "d) exactes;",
+            "(1) Directive (UE) 2015/1535 du Parlement européen et du Conseil prévoyant une procédure dans le",
+            "domaine des réglementations techniques (JO L 241 du 17.9.2015, p. 1).",
+            "e) conservées.",
+        ]
+    )
+
+    (article,) = split_articles([Page("test", 1, text)])
+
+    assert article.text == "d) exactes;\ne) conservées."

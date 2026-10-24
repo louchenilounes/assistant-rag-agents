@@ -30,18 +30,41 @@ Les PDF sont lus avec PyMuPDF. Les en-têtes et pieds de page du Journal officie
 
 Les modèles tournent en local avec Ollama, sur processeur, sans carte graphique.
 
+## Évaluation
+
+Le système est évalué sur 60 questions écrites à partir du texte des deux règlements, chacune accompagnée d'une réponse de référence et des articles qui la justifient (`data/eval/questions.jsonl`) :
+
+| Type | Dev | Test | Ce qui est vérifié |
+| --- | --- | --- | --- |
+| Factuelle | 24 | 12 | réponse contenue dans un seul article |
+| Multi-articles | 8 | 4 | réponse combinant deux articles, parfois des deux règlements |
+| Hors corpus | 8 | 4 | absence de réponse dans les documents : le système doit refuser |
+
+Les réglages se font uniquement sur le jeu **dev** ; le jeu **test** est réservé à la comparaison finale.
+
+Métriques : qualité de la recherche (Hit@k, Rappel@k, MRR), qualité des citations (précision et rappel par rapport aux articles attendus), exactitude des réponses jugée par un LLM-juge (`qwen3:8b`) puis contrôlée manuellement sur un échantillon, taux de refus correct et de refus à tort, latence.
+
+Les évaluations tournent sur GPU dans un notebook Kaggle (`kaggle/evaluation_kaggle.ipynb`) avec le même code que la version locale. Chaque réponse est enregistrée dès qu'elle est obtenue, ce qui permet de reprendre une évaluation interrompue.
+
 ## Structure du projet
 
 ```
 assistant-rag-agents/
-├── data/raw/                  Documents sources (PDF)
+├── data/
+│   ├── raw/                   Documents sources (PDF)
+│   └── eval/questions.jsonl   Jeu de questions annoté
+├── kaggle/
+│   └── evaluation_kaggle.ipynb  Évaluation sur GPU
 ├── notebooks/
 │   ├── 01_exploration_documents.ipynb
-│   └── 02_rag_simple.ipynb
+│   ├── 02_rag_simple.ipynb
+│   └── 03_evaluation_baseline.ipynb
+├── results/                   Réponses et métriques de chaque évaluation
 ├── scripts/
 │   ├── check_documents.py     Contrôle de la présence et du découpage des documents
 │   ├── build_index.py         Construction de l'index vectoriel
-│   └── ask.py                 Question en ligne de commande
+│   ├── ask.py                 Question en ligne de commande
+│   └── evaluate.py            Évaluation sur le jeu de questions
 ├── src/assistant_rag/
 │   ├── config.py              Chemins, corpus et paramètres
 │   ├── extraction.py          Extraction du texte, nettoyage, découpage en articles
@@ -49,7 +72,8 @@ assistant-rag-agents/
 │   ├── indexing.py            Construction et chargement de l'index
 │   ├── prompts.py             Prompts de génération
 │   ├── citations.py           Lecture des citations [n]
-│   └── rag.py                 RAG simple
+│   ├── rag.py                 RAG simple
+│   └── evaluation/            Jeu de questions, métriques, LLM-juge, exécution
 └── tests/                     Tests unitaires (pytest)
 ```
 
@@ -73,10 +97,11 @@ ollama pull bge-m3
 python scripts/check_documents.py
 python scripts/build_index.py
 python scripts/ask.py "Quelles sont les conditions du droit à l'effacement ?" --show-context
+python scripts/evaluate.py --split dev --limit 3
 pytest
 ```
 
-Les paramètres se modifient par variables d'environnement : `LLM_MODEL`, `EMBED_MODEL`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`, `OLLAMA_BASE_URL`.
+Les paramètres se modifient par variables d'environnement : `LLM_MODEL`, `EMBED_MODEL`, `JUDGE_MODEL`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`, `OLLAMA_BASE_URL`.
 
 ## Stack technique
 

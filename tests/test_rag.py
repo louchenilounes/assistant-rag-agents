@@ -9,7 +9,7 @@ from assistant_rag.chunking import build_chunks
 from assistant_rag.citations import REFUSAL
 from assistant_rag.extraction import Article
 from assistant_rag.indexing import build_index, load_index
-from assistant_rag.rag import SimpleRAG, build_user_prompt
+from assistant_rag.rag import Answer, SimpleRAG, Source, build_user_prompt
 
 
 class ScriptedLLM(CustomLLM):
@@ -104,3 +104,17 @@ def test_llm_receives_system_rules_and_context(index):
     prompt = rag.llm.prompts[-1]
     assert "uniquement à partir des extraits" in prompt
     assert "Question : effacement" in prompt
+
+
+def test_format_groups_passages_of_the_same_article():
+    sources = [
+        Source(1, "rgpd-art017-00", "rgpd", "RGPD", 17, "Droit à l'effacement", 43, 44, "", 0.9),
+        Source(2, "rgpd-art017-01", "rgpd", "RGPD", 17, "Droit à l'effacement", 43, 44, "", 0.8),
+        Source(3, "rgpd-art016-00", "rgpd", "RGPD", 16, "Droit de rectification", 43, 43, "", 0.7),
+    ]
+    answer = Answer(question="q", text="Réponse [1, 2]. Autre point [3].", sources=sources, cited=[1, 2, 3])
+
+    assert answer.format().splitlines()[-2:] == [
+        "[1, 2] RGPD, article 17 « Droit à l'effacement », p. 43-44",
+        "[3] RGPD, article 16 « Droit de rectification », p. 43",
+    ]

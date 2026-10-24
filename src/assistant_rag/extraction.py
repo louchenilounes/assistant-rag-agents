@@ -13,6 +13,9 @@ ARTICLE_HEADING = re.compile(r"^Article\s+(premier|1er|\d+)$")
 CHAPTER_HEADING = re.compile(r"^CHAPITRE\s+[IVXLC]+$")
 SECTION_HEADING = re.compile(r"^Section\s+\d+$")
 END_OF_ARTICLES = re.compile(r"^(ANNEXE\b|Fait à )")
+ENUMERATION = re.compile(r"^[a-z]{1,4}\)")
+FOOTNOTE_START = re.compile(r"^\(\d+\)\s+(Directive|Règlement|Décision)\b")
+FOOTNOTE_END = re.compile(r"p\.\s*\d+\)\.?$")
 SOFT_HYPHEN_BREAK = re.compile(r"\u00ad[ \t]*\n[ \t]*")
 MULTIPLE_SPACES = re.compile(r"[ \t]{2,}")
 EDGE_LINES = 3
@@ -81,9 +84,13 @@ def split_articles(pages: list[Page]) -> list[Article]:
     chapter: str | None = None
     expected = 1
     collecting = False
+    in_footnote = False
 
     for page in pages:
         for line in _lines(page.text):
+            if in_footnote or FOOTNOTE_START.match(line):
+                in_footnote = not FOOTNOTE_END.search(line)
+                continue
             heading = ARTICLE_HEADING.match(line)
             if heading and _article_number(heading.group(1)) == expected:
                 if current:
@@ -109,6 +116,8 @@ def split_articles(pages: list[Page]) -> list[Article]:
             elif current and collecting:
                 if current["title"] is None:
                     current["title"] = line
+                elif not current["lines"] and _continues_title(line):
+                    current["title"] = f"{current['title']} {line}"
                 else:
                     current["lines"].append(line)
                 current["end_page"] = page.number
@@ -146,6 +155,11 @@ def _build_article(data: dict) -> Article:
         end_page=data["end_page"],
         text="\n".join(data["lines"]),
     )
+
+
+def _continues_title(line: str) -> bool:
+    """Un titre sur plusieurs lignes se poursuit par une ligne commençant par une minuscule, hors énumération « a) »."""
+    return line[0].islower() and not ENUMERATION.match(line)
 
 
 def _article_number(value: str) -> int:
