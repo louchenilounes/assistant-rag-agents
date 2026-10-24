@@ -1,0 +1,22 @@
+{
+  "system": "simple",
+  "split": "dev",
+  "settings": {
+    "ollama_base_url": "http://localhost:11434",
+    "llm_model": "qwen3:4b-instruct",
+    "embed_model": "bge-m3",
+    "judge_model": "qwen3:8b",
+    "chunk_size": 512,
+    "chunk_overlap": 64,
+    "top_k": 5,
+    "temperature": 0.0,
+    "context_window": 4096,
+    "max_new_tokens": 512,
+    "request_timeout": 600.0,
+    "embed_batch_size": 16
+  },
+  "prompt_version": "rag-v1",
+  "judge": "qwen3:8b",
+  "git_commit": "2e8f72c",
+  "started_at": "2026-10-24T13:48:09"
+}

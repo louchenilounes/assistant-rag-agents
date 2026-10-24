@@ -1,0 +1,32 @@
+id,verdict_juge,verdict_humain,commentaire
+rgpd-01,correct,correct,Seuil de 16 ans exact ; la possibilité d'abaissement à 13 ans est omise.
+rgpd-02,correct,correct,
+rgpd-04,correct,correct,
+rgpd-05,correct,correct,
+rgpd-06,correct,correct,"Principes reformulés mais complets, sauf le principe de responsabilité."
+rgpd-08,correct,correct,Ajoute une référence exacte à la définition de l'AI Act.
+rgpd-09,correct,correct,
+rgpd-11,correct,correct,
+rgpd-12,partiel,correct,La durée de quatre ans répond à la question ; l'exception transitoire est un détail.
+rgpd-14,correct,correct,
+rgpd-15,correct,correct,
+rgpd-17,correct,correct,
+aiact-01,correct,correct,Sept pratiques sur huit ; l'exploitation des vulnérabilités est omise.
+aiact-02,correct,correct,
+aiact-04,partiel,correct,"Réponse exacte et plus complète que la référence (textes d'intérêt public, hypertrucages) : le juge pénalise des ajouts exacts."
+aiact-05,correct,correct,Le seuil 10^25 apparaît sous la forme « 1025 » : exposant perdu à l'extraction du PDF.
+aiact-06,partiel,incorrect,"Montant faux : 1 500 000 EUR (article 100, institutions de l'Union) au lieu de 35 000 000 EUR ou 7 %."
+aiact-08,partiel,correct,Montants exacts ; les conditions ajoutées sont exactes.
+aiact-09,correct,correct,"Décrit les capacités prévues au paragraphe 4 de l'article 14, exactes."
+aiact-11,correct,correct,
+aiact-12,correct,correct,
+aiact-14,partiel,correct,La condition jugée ajoutée figure bien dans l'article 86.
+aiact-16,partiel,partiel,"Date générale exacte, exceptions omises."
+aiact-18,partiel,correct,Exact ; le numéro de l'organisme notifié est une précision exacte de l'article 48.
+multi-01,correct,correct,
+multi-03,correct,correct,
+multi-04,partiel,partiel,Attribue la source des données au cas de collecte directe et omet le délégué dans ce cas.
+multi-06,incorrect,correct,"« Oui, à condition que l'article 9, paragraphe 2, point a) ou g), s'applique » a le même sens que la référence."
+multi-08,correct,correct,
+multi-10,correct,correct,
+multi-11,partiel,incorrect,Affirmation inventée sur le RGPD : l'article 9 n'a pas été retrouvé et la réponse lui attribue une règle fausse.

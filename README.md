@@ -46,6 +46,22 @@ Métriques : qualité de la recherche (Hit@k, Rappel@k, MRR), qualité des citat
 
 Les évaluations tournent sur GPU dans un notebook Kaggle (`kaggle/evaluation_kaggle.ipynb`) avec le même code que la version locale. Chaque réponse est enregistrée dès qu'elle est obtenue, ce qui permet de reprendre une évaluation interrompue.
 
+## Résultats
+
+RAG simple évalué sur les 40 questions du jeu **dev** (`qwen3:4b-instruct`, `bge-m3`, chunks de 512 tokens, k = 5), sur GPU T4 :
+
+| Métrique | Factuelles | Multi-articles | Ensemble |
+| --- | --- | --- | --- |
+| Hit@5 | 100 % | 100 % | 100 % |
+| Rappel@5 | 100 % | 81 % | 95 % |
+| Précision des citations | 96 % | 93 % | 95 % |
+| Rappel des citations | 100 % | 75 % | 94 % |
+| Exactitude (relecture humaine) | 0,94 | 0,69 | 0,88 |
+
+Les 8 questions hors corpus sont toutes refusées ; une seule question avec réponse est refusée à tort. Le LLM-juge s'accorde avec la relecture humaine dans 74 % des cas. Le détail, l'analyse des erreurs et la relecture sont dans `notebooks/03_evaluation_baseline.ipynb` et `results/simple-dev/`.
+
+Point faible identifié : les questions qui combinent deux articles, pour lesquelles un des articles manque parmi les passages retrouvés dans 3 cas sur 8. C'est la cible du système multi-agents.
+
 ## Structure du projet
 
 ```
@@ -111,7 +127,7 @@ Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · Fa
 
 - [x] Corpus, extraction du texte et découpage en articles
 - [x] RAG simple avec citation des sources
-- [ ] Jeu de questions de test et évaluation de référence
+- [x] Jeu de questions de test et évaluation de référence
 - [ ] Système multi-agents (chercheur, rédacteur, vérificateur)
 - [ ] Comparaison RAG simple / multi-agents
 - [ ] Suivi des expériences avec MLflow

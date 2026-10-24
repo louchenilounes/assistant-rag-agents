@@ -10,7 +10,7 @@ import pandas as pd
 
 from assistant_rag.config import RESULTS_DIR, Settings
 from assistant_rag.evaluation.dataset import load_questions
-from assistant_rag.evaluation.judge import Judge, build_judge_llm
+from assistant_rag.evaluation.judge import JUDGE_PROMPT_VERSION, Judge, build_judge_llm
 from assistant_rag.evaluation.metrics import summarize
 from assistant_rag.evaluation.runner import run_evaluation
 from assistant_rag.prompts import PROMPT_VERSION
@@ -49,6 +49,7 @@ def main() -> None:
             "settings": asdict(settings),
             "prompt_version": PROMPT_VERSION,
             "judge": None if args.no_judge else settings.judge_model,
+            "judge_prompt_version": None if args.no_judge else JUDGE_PROMPT_VERSION,
             "git_commit": git_commit(),
             "started_at": datetime.now().isoformat(timespec="seconds"),
         }
