@@ -65,10 +65,13 @@ class Settings:
     chunk_overlap: int = field(default_factory=lambda: int(_env("CHUNK_OVERLAP", "64")))
     top_k: int = field(default_factory=lambda: int(_env("TOP_K", "5")))
     temperature: float = 0.0
-    context_window: int = 4096
+    context_window: int = 6144
     max_new_tokens: int = 512
     request_timeout: float = 600.0
     embed_batch_size: int = 16
+    max_sources: int = 5
+    max_chunks_per_article: int = 2
+    max_revisions: int = 2
 
     @property
     def index_dir(self) -> Path:

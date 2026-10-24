@@ -21,6 +21,7 @@ METRIC_LABELS = {
     "false_refusal": "Refus à tort",
     "correct_refusal": "Refus correct",
     "latency": "Latence moyenne (s)",
+    "llm_calls": "Appels au LLM",
 }
 
 
@@ -37,6 +38,7 @@ def score_record(record: dict) -> dict:
         "id": record["id"],
         "type": record["type"],
         "latency": record["latency"],
+        "llm_calls": record.get("llm_calls", 1),
         "hit": None,
         "retrieval_recall": None,
         "reciprocal_rank": None,

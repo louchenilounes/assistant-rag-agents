@@ -34,6 +34,9 @@ def build_record(question: Question, answer: Answer, judge: Judge | None) -> dic
         ],
         "cited": [{"number": s.number, "document": s.document, "article": s.article} for s in answer.cited_sources],
         "latency": round(answer.latency, 2),
+        "llm_calls": answer.llm_calls,
+        "verified": answer.verified,
+        "trace": answer.trace,
         "judge": None,
     }
     if judge is not None and question.answerable and not answer.refused:

@@ -30,6 +30,26 @@ Les PDF sont lus avec PyMuPDF. Les en-têtes et pieds de page du Journal officie
 
 Les modèles tournent en local avec Ollama, sur processeur, sans carte graphique.
 
+## Système multi-agents
+
+Trois agents coopèrent dans un graphe LangGraph. Ils partagent un état commun (question, sous-questions, passages, brouillon, verdict) et chaque étape est enregistrée dans une trace consultable.
+
+```mermaid
+flowchart LR
+    Q([Question]) --> C[Chercheur]
+    C --> R[Rédacteur]
+    R --> V[Vérificateur]
+    V -- valide ou refus --> F([Réponse citée])
+    V -- affirmation non justifiée --> R
+    V -- aspect non couvert --> C
+```
+
+- **Chercheur** : décompose la question en sous-questions lorsqu'elle porte sur plusieurs aspects, lance une recherche pour chacune et retient les passages à tour de rôle, avec au plus 2 passages par article, pour que chaque aspect soit couvert.
+- **Rédacteur** : rédige la réponse à partir des seuls passages retenus, en citant chaque affirmation, et la corrige à partir des remarques du vérificateur.
+- **Vérificateur** : contrôle que chaque affirmation est justifiée par l'extrait qu'elle cite (montants, délais, conditions). Il renvoie la réponse au rédacteur si une affirmation n'est pas justifiée, ou au chercheur avec de nouvelles requêtes si un aspect n'est couvert par aucun passage. Le nombre de corrections est limité à 2.
+
+Le système multi-agents utilise le même modèle, le même index et le même nombre maximal de passages (5) que le RAG simple, pour que la comparaison ne porte que sur l'architecture.
+
 ## Évaluation
 
 Le système est évalué sur 60 questions écrites à partir du texte des deux règlements, chacune accompagnée d'une réponse de référence et des articles qui la justifient (`data/eval/questions.jsonl`) :
@@ -89,6 +109,7 @@ assistant-rag-agents/
 │   ├── prompts.py             Prompts de génération
 │   ├── citations.py           Lecture des citations [n]
 │   ├── rag.py                 RAG simple
+│   ├── agents/                Chercheur, rédacteur, vérificateur et graphe LangGraph
 │   └── evaluation/            Jeu de questions, métriques, LLM-juge, exécution
 └── tests/                     Tests unitaires (pytest)
 ```
@@ -113,6 +134,7 @@ ollama pull bge-m3
 python scripts/check_documents.py
 python scripts/build_index.py
 python scripts/ask.py "Quelles sont les conditions du droit à l'effacement ?" --show-context
+python scripts/ask.py "Quelles obligations en cas de violation de données ?" --system agents --show-trace
 python scripts/evaluate.py --split dev --limit 3
 pytest
 ```
@@ -128,7 +150,7 @@ Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · Fa
 - [x] Corpus, extraction du texte et découpage en articles
 - [x] RAG simple avec citation des sources
 - [x] Jeu de questions de test et évaluation de référence
-- [ ] Système multi-agents (chercheur, rédacteur, vérificateur)
+- [x] Système multi-agents (chercheur, rédacteur, vérificateur)
 - [ ] Comparaison RAG simple / multi-agents
 - [ ] Suivi des expériences avec MLflow
 - [ ] API FastAPI et interface Streamlit

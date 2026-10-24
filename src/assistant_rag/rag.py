@@ -66,6 +66,9 @@ class Answer:
     cited: list[int] = field(default_factory=list)
     refused: bool = False
     latency: float = 0.0
+    llm_calls: int = 1
+    verified: bool | None = None
+    trace: list[dict] = field(default_factory=list)
 
     @property
     def cited_sources(self) -> list[Source]:
@@ -91,7 +94,13 @@ def build_user_prompt(question: str, sources: list[Source]) -> str:
     return f"Extraits :\n\n{format_context(sources)}\n\nQuestion : {question}"
 
 
-def build_llm(settings: Settings) -> LLM:
+def chat(llm: LLM, system_prompt: str, user_prompt: str) -> str:
+    """Envoie un échange système / utilisateur au LLM et renvoie sa réponse sans raisonnement."""
+    messages = [ChatMessage(role="system", content=system_prompt), ChatMessage(role="user", content=user_prompt)]
+    return strip_thinking(llm.chat(messages).message.content or "")
+
+
+def build_llm(settings: Settings, json_mode: bool = False) -> LLM:
     return Ollama(
         model=settings.llm_model,
         base_url=settings.ollama_base_url,
@@ -99,6 +108,7 @@ def build_llm(settings: Settings) -> LLM:
         context_window=settings.context_window,
         request_timeout=settings.request_timeout,
         additional_kwargs={"num_predict": settings.max_new_tokens},
+        json_mode=json_mode,
         thinking=False,
     )
 
@@ -121,12 +131,7 @@ class SimpleRAG:
         return [Source.from_node(number, result) for number, result in enumerate(results, start=1)]
 
     def generate(self, question: str, sources: list[Source]) -> str:
-        messages = [
-            ChatMessage(role="system", content=SYSTEM_PROMPT),
-            ChatMessage(role="user", content=build_user_prompt(question, sources)),
-        ]
-        response = self.llm.chat(messages)
-        return strip_thinking(response.message.content or "")
+        return chat(self.llm, SYSTEM_PROMPT, build_user_prompt(question, sources))
 
     def answer(self, question: str) -> Answer:
         start = time.perf_counter()

@@ -8,6 +8,8 @@ from datetime import datetime
 
 import pandas as pd
 
+from assistant_rag.agents.graph import AgentsRAG
+from assistant_rag.agents.prompts import AGENTS_PROMPT_VERSION
 from assistant_rag.config import RESULTS_DIR, Settings
 from assistant_rag.evaluation.dataset import load_questions
 from assistant_rag.evaluation.judge import JUDGE_PROMPT_VERSION, Judge, build_judge_llm
@@ -16,7 +18,7 @@ from assistant_rag.evaluation.runner import run_evaluation
 from assistant_rag.prompts import PROMPT_VERSION
 from assistant_rag.rag import SimpleRAG
 
-SYSTEMS = {"simple": SimpleRAG}
+SYSTEMS = {"simple": SimpleRAG, "agents": AgentsRAG}
 
 
 def git_commit() -> str | None:
@@ -48,6 +50,7 @@ def main() -> None:
             "split": args.split,
             "settings": asdict(settings),
             "prompt_version": PROMPT_VERSION,
+            "agents_prompt_version": AGENTS_PROMPT_VERSION if args.system == "agents" else None,
             "judge": None if args.no_judge else settings.judge_model,
             "judge_prompt_version": None if args.no_judge else JUDGE_PROMPT_VERSION,
             "git_commit": git_commit(),
