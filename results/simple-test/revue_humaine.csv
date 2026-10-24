@@ -1,0 +1,17 @@
+id,verdict_juge,verdict_humain,commentaire
+rgpd-03,correct,correct,
+rgpd-07,partiel,correct,Le format demandé est exact ; la possibilité de transmission à un autre responsable n'était pas demandée.
+rgpd-10,correct,correct,
+rgpd-13,correct,correct,
+rgpd-16,correct,correct,
+rgpd-18,partiel,partiel,Omet que le sous-traitant n'est responsable que s'il manque à ses obligations propres ou sort des instructions.
+aiact-03,correct,correct,
+aiact-07,correct,correct,
+aiact-10,correct,correct,
+aiact-13,correct,correct,
+aiact-15,partiel,correct,La date du 2 août 2026 répond à la question ; l'obligation d'au moins un bac à sable par État membre est un détail.
+aiact-17,correct,correct,
+multi-02,correct,correct,
+multi-05,partiel,correct,Les conditions du consentement et la règle des 16 ans (13 ans au minimum) sont présentes.
+multi-09,partiel,partiel,"Obligations des fournisseurs complètes ; pour les déployeurs, seules des obligations secondaires sont citées (information des travailleurs, enregistrement)."
+multi-12,correct,correct,

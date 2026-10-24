@@ -1,0 +1,5 @@
+,Questions,Hit@k,Rappel@k,MRR,Précision des citations,Rappel des citations,Exactitude,Refus à tort,Refus correct,Latence moyenne (s),Appels au LLM
+Factuelles,12,1.0,1.0,1.0,0.7916666666666666,0.9166666666666666,0.8333333333333334,0.0,,11.590000000000002,4.0
+Multi-articles,4,1.0,1.0,0.875,1.0,1.0,0.875,0.0,,30.2075,5.0
+Hors corpus,4,,,,,,,,1.0,2.6574999999999998,2.0
+Ensemble,20,1.0,1.0,0.96875,0.84375,0.9375,0.84375,0.0,1.0,13.527000000000001,3.8

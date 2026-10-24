@@ -62,44 +62,46 @@ Le système est évalué sur 60 questions écrites à partir du texte des deux r
 
 Les réglages se font uniquement sur le jeu **dev** ; le jeu **test** est réservé à la comparaison finale.
 
-Métriques : qualité de la recherche (Hit@k, Rappel@k, MRR), qualité des citations (précision et rappel par rapport aux articles attendus), exactitude des réponses jugée par un LLM-juge (`qwen3:8b`) puis contrôlée manuellement sur un échantillon, taux de refus correct et de refus à tort, latence.
+Métriques : qualité de la recherche (Hit@k, Rappel@k, MRR), qualité des citations (précision et rappel par rapport aux articles attendus), exactitude des réponses jugée par un LLM-juge (`qwen3:8b`) puis relue à la main pour chaque réponse, taux de refus correct et de refus à tort, latence.
 
 Les évaluations tournent sur GPU dans un notebook Kaggle (`kaggle/evaluation_kaggle.ipynb`) avec le même code que la version locale. Chaque réponse est enregistrée dès qu'elle est obtenue, ce qui permet de reprendre une évaluation interrompue.
 
 ## Résultats
 
-### RAG simple (jeu dev)
+### Comparaison finale sur le jeu test
 
-RAG simple évalué sur les 40 questions du jeu **dev** (`qwen3:4b-instruct`, `bge-m3`, chunks de 512 tokens, k = 5), sur GPU T4 :
-
-| Métrique | Factuelles | Multi-articles | Ensemble |
-| --- | --- | --- | --- |
-| Hit@5 | 100 % | 100 % | 100 % |
-| Rappel@5 | 100 % | 81 % | 95 % |
-| Précision des citations | 96 % | 93 % | 95 % |
-| Rappel des citations | 100 % | 75 % | 94 % |
-| Exactitude (relecture humaine) | 0,94 | 0,69 | 0,88 |
-
-Les 8 questions hors corpus sont toutes refusées ; une seule question avec réponse est refusée à tort. Le LLM-juge s'accorde avec la relecture humaine dans 74 % des cas. Le détail, l'analyse des erreurs et la relecture sont dans `notebooks/03_evaluation_baseline.ipynb` et `results/simple-dev/`.
-
-Point faible identifié : les questions qui combinent deux articles, pour lesquelles un des articles manque parmi les passages retrouvés dans 3 cas sur 8. C'est la cible du système multi-agents.
-
-### Système multi-agents (jeu dev)
-
-Comparaison sur les 40 questions du jeu **dev**, dans les mêmes conditions (même modèle, même index, même juge) :
+Les deux systèmes sont évalués sur les 20 questions du jeu **test**, jamais utilisées pendant les réglages, avec le même code, le même modèle (`qwen3:4b-instruct`), le même index et au plus 5 passages par réponse. Chaque réponse notée a été relue à la main.
 
 | Métrique | RAG simple | Agents |
 | --- | --- | --- |
-| Rappel@5, questions multi-articles | 81 % | 94 % |
-| Rappel des citations, questions multi-articles | 81 % | 94 % |
-| Exactitude relue, questions factuelles | 0,94 | 0,94 |
-| Exactitude relue, questions multi-articles | 0,75 | 0,81 |
-| Exactitude relue, ensemble | 0,89 | 0,91 |
+| Rappel@5 (articles attendus retrouvés) | 100 % | 100 % |
+| Précision des citations | 92 % | 84 % |
+| Exactitude relue, questions factuelles | 0,96 | 0,88 |
+| Exactitude relue, questions multi-articles | 0,88 | 0,75 |
+| Exactitude relue, ensemble | **0,94** | 0,84 |
 | Refus correct (hors corpus) | 100 % | 100 % |
-| Appels au LLM par question | 1 | 3,3 |
-| Latence médiane sur GPU T4 | 4,4 s | 7,0 s |
+| Appels au LLM par question | 1 | 3,8 |
+| Latence médiane sur GPU T4 | 3,4 s | 6,9 s |
 
-La recherche par sous-question améliore la couverture des questions qui combinent plusieurs articles. L'écart global d'exactitude n'est pas significatif sur 32 questions. Avec un modèle de 4 milliards de paramètres, le vérificateur ne corrige aucune réponse de façon fiable mais signale les réponses douteuses. La première version des agents, moins bonne que le RAG simple, et son analyse sont détaillées dans `notebooks/04_multi_agents.ipynb`.
+Sur les 48 questions avec réponse des jeux dev et test réunis, l'écart d'exactitude (agents − simple) est de −0,02, avec un intervalle de confiance à 95 % de [−0,10 ; 0,06] obtenu par bootstrap apparié : **aucun des deux systèmes n'est significativement plus exact**. L'écart est du même ordre que la variabilité d'un même système d'une exécution à l'autre (19 réponses sur 40 changent entre deux exécutions sur GPU).
+
+**Ce que montrent les expériences :**
+
+- le **chercheur** améliore la couverture des questions qui combinent plusieurs articles lorsque la recherche simple en manque un (jeu dev : rappel de 81 % à 94 %) ;
+- le **vérificateur**, avec un modèle de 4 milliards de paramètres, ne corrige pas les réponses de façon fiable, mais signale les réponses douteuses : sur le jeu test, 2 réponses non validées sur 3 sont fausses ou incomplètes, contre 2 sur 13 parmi les réponses validées ;
+- la **décomposition** des questions provoque aussi des erreurs de synthèse lors de la rédaction.
+
+**Choix retenu :** le RAG simple est le mode par défaut, aussi exact, deux fois plus rapide et quatre fois moins coûteux. Le mode multi-agents reste disponible pour les questions qui combinent plusieurs règles, avec un avertissement lorsque le vérificateur n'a pas validé la réponse.
+
+Détails : `notebooks/03_evaluation_baseline.ipynb` (référence), `notebooks/04_multi_agents.ipynb` (mise au point des agents sur le jeu dev), `notebooks/05_comparaison_finale.ipynb` (jeu test) et `results/`.
+
+### Limites
+
+- Jeu d'évaluation réduit (48 questions avec réponse) : seuls des écarts importants sont détectables.
+- Un seul modèle de génération, de petite taille, imposé par l'exécution locale sur processeur.
+- Relecture humaine faite par une seule personne ; le LLM-juge n'est d'accord avec elle que dans 74 à 84 % des cas.
+- Génération non déterministe sur GPU ; chaque système n'a été évalué qu'une fois sur le jeu test.
+- Certaines notations sont perdues à l'extraction du PDF (exposants : 10^25 est lu « 1025 »).
 
 ## Structure du projet
 
@@ -114,7 +116,8 @@ assistant-rag-agents/
 │   ├── 01_exploration_documents.ipynb
 │   ├── 02_rag_simple.ipynb
 │   ├── 03_evaluation_baseline.ipynb
-│   └── 04_multi_agents.ipynb
+│   ├── 04_multi_agents.ipynb
+│   └── 05_comparaison_finale.ipynb
 ├── results/                   Réponses et métriques de chaque évaluation
 ├── scripts/
 │   ├── check_documents.py     Contrôle de la présence et du découpage des documents
@@ -171,7 +174,7 @@ Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · Fa
 - [x] RAG simple avec citation des sources
 - [x] Jeu de questions de test et évaluation de référence
 - [x] Système multi-agents (chercheur, rédacteur, vérificateur)
-- [ ] Comparaison RAG simple / multi-agents
+- [x] Comparaison RAG simple / multi-agents
 - [ ] Suivi des expériences avec MLflow
 - [ ] API FastAPI et interface Streamlit
 - [ ] Conteneurisation Docker et intégration continue
