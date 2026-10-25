@@ -1,5 +1,7 @@
 # Assistant RAG multi-agents
 
+[![CI](https://github.com/louchenilounes/assistant-rag-agents/actions/workflows/ci.yml/badge.svg)](https://github.com/louchenilounes/assistant-rag-agents/actions/workflows/ci.yml)
+
 Assistant de questions-réponses sur des textes réglementaires européens (RGPD et AI Act).
 Chaque réponse cite ses sources : document, article et page.
 
@@ -114,6 +116,7 @@ Les 13 évaluations du dossier `results/` sont enregistrées dans MLflow avec le
 
 ```
 assistant-rag-agents/
+├── .github/workflows/ci.yml   Intégration continue : ruff, pytest, image Docker
 ├── app/
 │   └── streamlit_app.py       Interface web
 ├── data/
@@ -147,10 +150,14 @@ assistant-rag-agents/
 │   ├── agents/                Chercheur, rédacteur, vérificateur et graphe LangGraph
 │   ├── evaluation/            Jeu de questions, métriques, LLM-juge, exécution
 │   └── tracking.py            Suivi des expériences avec MLflow
-└── tests/                     Tests unitaires (pytest)
+├── tests/                     Tests unitaires (pytest)
+├── Dockerfile                 Image de l'API et de l'interface
+└── docker-compose.yml         Ollama, API et interface en une commande
 ```
 
 ## Installation
+
+### En local
 
 Prérequis : Python 3.11 ou plus récent et [Ollama](https://ollama.com/download).
 
@@ -163,6 +170,25 @@ pip install -e .
 ollama pull qwen3:4b-instruct
 ollama pull bge-m3
 ```
+
+### Avec Docker
+
+Prérequis : [Docker Desktop](https://www.docker.com/products/docker-desktop/) avec au moins 6 Go de mémoire alloués.
+
+```bash
+docker compose up --build
+```
+
+La commande démarre quatre services :
+
+| Service | Rôle |
+|---|---|
+| `ollama` | Serveur de modèles, modèles conservés dans un volume |
+| `models` | Téléchargement de `qwen3:4b-instruct` et `bge-m3` au premier lancement |
+| `api` | Construction de l'index au premier lancement, puis API sur http://localhost:8000 |
+| `app` | Interface Streamlit sur http://localhost:8501, démarrée quand l'API est prête |
+
+Le premier lancement télécharge environ 4 Go de modèles et construit l'index ; les suivants démarrent en quelques secondes. Les modèles se changent avec les variables `LLM_MODEL` et `EMBED_MODEL`, par exemple `LLM_MODEL=qwen3:8b docker compose up`. `docker compose down` arrête les services, `docker compose down -v` supprime aussi les modèles et l'index.
 
 ## Utilisation
 
@@ -188,6 +214,8 @@ streamlit run app/streamlit_app.py             # terminal 2
 
 L'interface (http://localhost:8501) affiche la réponse, les sources citées, les autres passages consultés et, en mode multi-agents, les recherches et le verdict du vérificateur ; une réponse non validée par le vérificateur est signalée. L'adresse de l'API se règle avec la variable `API_URL`.
 
+Les tests remplacent Ollama par de faux modèles : ils tournent sans GPU ni modèle téléchargé, ce qui permet de les exécuter dans GitHub Actions à chaque push, avec ruff et la construction de l'image Docker.
+
 Les paramètres se modifient par variables d'environnement : `LLM_MODEL`, `EMBED_MODEL`, `JUDGE_MODEL`, `VERIFIER_MODEL`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`, `CONTEXT_WINDOW`, `OLLAMA_BASE_URL`.
 
 ## Stack technique
@@ -203,4 +231,4 @@ Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · Fa
 - [x] Comparaison RAG simple / multi-agents
 - [x] Suivi des expériences avec MLflow
 - [x] API FastAPI et interface Streamlit
-- [ ] Conteneurisation Docker et intégration continue
+- [x] Conteneurisation Docker et intégration continue

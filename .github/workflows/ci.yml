@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    name: Lint et tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Installation
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Ruff
+        run: ruff check .
+      - name: Pytest
+        run: pytest
+
+  docker:
+    name: Construction de l'image Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validation de docker-compose.yml
+        run: docker compose config --quiet
+      - name: Construction et test de l'image
+        run: |
+          docker build -t assistant-rag .
+          docker run --rm assistant-rag python -c "from assistant_rag.api import app; print(app.title)"
