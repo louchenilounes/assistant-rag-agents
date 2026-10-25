@@ -114,6 +114,8 @@ Les 13 évaluations du dossier `results/` sont enregistrées dans MLflow avec le
 
 ```
 assistant-rag-agents/
+├── app/
+│   └── streamlit_app.py       Interface web
 ├── data/
 │   ├── raw/                   Documents sources (PDF)
 │   └── eval/questions.jsonl   Jeu de questions annoté
@@ -134,6 +136,7 @@ assistant-rag-agents/
 │   ├── evaluate.py            Évaluation sur le jeu de questions
 │   └── log_mlflow.py          Enregistrement des évaluations dans MLflow
 ├── src/assistant_rag/
+│   ├── api.py                 API FastAPI
 │   ├── config.py              Chemins, corpus et paramètres
 │   ├── extraction.py          Extraction du texte, nettoyage, découpage en articles
 │   ├── chunking.py            Découpage des articles en chunks avec métadonnées
@@ -174,6 +177,17 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db --workers 1
 pytest
 ```
 
+### API et interface web
+
+L'API expose deux routes : `GET /health` (état de l'API, d'Ollama et de l'index) et `POST /ask`, qui reçoit `{"question": "...", "mode": "simple" | "agents"}` et renvoie la réponse, les sources numérotées avec un extrait, le temps de réponse, le nombre d'appels au LLM et, en mode multi-agents, les étapes des agents. La documentation interactive est disponible sur http://localhost:8000/docs.
+
+```bash
+uvicorn assistant_rag.api:app --port 8000      # terminal 1
+streamlit run app/streamlit_app.py             # terminal 2
+```
+
+L'interface (http://localhost:8501) affiche la réponse, les sources citées, les autres passages consultés et, en mode multi-agents, les recherches et le verdict du vérificateur ; une réponse non validée par le vérificateur est signalée. L'adresse de l'API se règle avec la variable `API_URL`.
+
 Les paramètres se modifient par variables d'environnement : `LLM_MODEL`, `EMBED_MODEL`, `JUDGE_MODEL`, `VERIFIER_MODEL`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`, `CONTEXT_WINDOW`, `OLLAMA_BASE_URL`.
 
 ## Stack technique
@@ -188,5 +202,5 @@ Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · Fa
 - [x] Système multi-agents (chercheur, rédacteur, vérificateur)
 - [x] Comparaison RAG simple / multi-agents
 - [x] Suivi des expériences avec MLflow
-- [ ] API FastAPI et interface Streamlit
+- [x] API FastAPI et interface Streamlit
 - [ ] Conteneurisation Docker et intégration continue
