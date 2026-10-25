@@ -27,7 +27,11 @@ jobs:
       - name: Ruff
         run: ruff check .
       - name: Pytest
-        run: pytest
+        env:
+          NLTK_DATA: ${{ runner.temp }}/nltk_data
+        run: |
+          mkdir -m 700 -p "$NLTK_DATA"
+          pytest
 
   docker:
     name: Construction de l'image Docker
