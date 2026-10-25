@@ -72,3 +72,13 @@ def test_question_displays_answer(_get, post):
     assert "Dans un délai de 72 heures [1]." in markdown
     assert "non validée" in app.warning[0].value
     assert len(app.session_state.messages) == 2
+
+
+@patch("requests.post", return_value=response(RESULT))
+@patch("requests.get", return_value=response(HEALTH))
+def test_example_button_asks_question(_get, post):
+    app = AppTest.from_file(APP_PATH, default_timeout=10).run()
+    app.button[1].click().run()
+    assert not app.exception
+    assert post.call_args.kwargs["json"]["question"].startswith("Quelles pratiques")
+    assert "Exemples de questions" not in [element.value for element in app.markdown]

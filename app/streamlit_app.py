@@ -43,6 +43,10 @@ def ask(question: str, mode: str) -> dict:
     return response.json()
 
 
+def choose_example(example: str) -> None:
+    st.session_state.pending = example
+
+
 def render_sources(sources: list[dict]) -> None:
     for source in sources:
         st.markdown(f"**[{source['number']}] {source['label']}**")
@@ -108,11 +112,10 @@ st.write("Posez une question sur le RGPD ou l'AI Act : chaque réponse cite les 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if not st.session_state.messages:
+if not st.session_state.messages and "pending" not in st.session_state:
     st.markdown("**Exemples de questions**")
     for column, example in zip(st.columns(len(EXAMPLES)), EXAMPLES, strict=True):
-        if column.button(example, use_container_width=True):
-            st.session_state.pending = example
+        column.button(example, use_container_width=True, on_click=choose_example, args=(example,))
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
