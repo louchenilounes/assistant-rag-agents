@@ -1,16 +1,42 @@
 # Assistant RAG multi-agents
 
 [![CI](https://github.com/louchenilounes/assistant-rag-agents/actions/workflows/ci.yml/badge.svg)](https://github.com/louchenilounes/assistant-rag-agents/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11%20%7C%203.13-blue)
 
-Assistant de questions-réponses sur des textes réglementaires européens (RGPD et AI Act).
-Chaque réponse cite ses sources : document, article et page.
+Assistant de questions-réponses sur deux textes réglementaires européens, le **RGPD** et l'**AI Act**. Chaque réponse cite ses sources (document, article, page) et le système refuse de répondre lorsque les documents ne contiennent pas l'information.
 
-Deux approches sont développées et comparées sur un même jeu de questions :
+Deux architectures sont développées et comparées de façon contrôlée :
 
 - un **RAG simple** : recherche des passages pertinents, puis génération de la réponse ;
 - un **système multi-agents** construit avec LangGraph : un chercheur sélectionne les passages, un rédacteur écrit la réponse, un vérificateur contrôle que chaque affirmation est soutenue par une source.
 
-Le modèle de langage tourne en local avec Ollama : aucune donnée n'est envoyée à un service externe.
+Tout tourne en local avec Ollama : aucune donnée n'est envoyée à un service externe.
+
+**Résultat principal** : sur le jeu test, réservé à la comparaison finale, le RAG simple atteint une exactitude de 0,94 (relue à la main) avec 100 % de refus corrects sur les questions hors corpus. Le système multi-agents n'est pas significativement plus exact, pour un coût presque quatre fois plus élevé : le RAG simple est donc le mode par défaut.
+
+## Démonstration
+
+![Question et réponse citée](docs/demo-reponse.png)
+
+![Sources citées avec leurs extraits](docs/demo-sources.png)
+
+Interface Streamlit appelant l'API FastAPI, sur un ordinateur portable sans carte graphique : une réponse prend plusieurs minutes sur processeur, contre quelques secondes sur GPU.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    PDF[(PDF EUR-Lex)] --> EXT[Extraction et découpage en articles]
+    EXT --> CH[Chunks avec métadonnées]
+    CH --> IDX[(Index vectoriel bge-m3)]
+    UI[Interface Streamlit] -->|POST /ask| API[API FastAPI]
+    API --> S[RAG simple]
+    API --> A[Multi-agents LangGraph]
+    S --> IDX
+    A --> IDX
+    S --> LLM[Ollama qwen3:4b-instruct]
+    A --> LLM
+```
 
 ## Données
 
@@ -122,6 +148,7 @@ assistant-rag-agents/
 ├── data/
 │   ├── raw/                   Documents sources (PDF)
 │   └── eval/questions.jsonl   Jeu de questions annoté
+├── docs/                      Captures de l'interface
 ├── kaggle/
 │   └── evaluation_kaggle.ipynb  Évaluation sur GPU
 ├── notebooks/
@@ -218,17 +245,28 @@ Les tests remplacent Ollama par de faux modèles : ils tournent sans GPU ni mod�
 
 Les paramètres se modifient par variables d'environnement : `LLM_MODEL`, `EMBED_MODEL`, `JUDGE_MODEL`, `VERIFIER_MODEL`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`, `CONTEXT_WINDOW`, `OLLAMA_BASE_URL`.
 
+## Choix techniques
+
+| Choix | Raison |
+| --- | --- |
+| Découpage par article | L'article est l'unité de citation d'un texte juridique : chaque passage garde son numéro, son titre et ses pages. |
+| `bge-m3` pour les embeddings | Modèle multilingue performant en français, disponible dans Ollama. |
+| `qwen3:4b-instruct` pour la génération | Plus grand modèle utilisable sur un portable de 8 Go de RAM ; la variante *instruct* répond sans phase de raisonnement, donc beaucoup plus vite. |
+| LangGraph pour les agents | Graphe explicite avec état partagé, boucles de correction bornées et trace de chaque étape. |
+| Séparation dev / test | Tous les réglages sont faits sur le jeu dev ; le jeu test ne sert qu'une fois, pour la comparaison finale. |
+| LLM-juge et relecture humaine | Le juge (`qwen3:8b`, plus grand que le modèle évalué) permet d'évaluer rapidement ; la relecture humaine de chaque réponse corrige ses erreurs. |
+| Évaluations sur Kaggle | GPU gratuit, même code qu'en local, réponses enregistrées une à une pour reprendre une évaluation interrompue. |
+| MLflow | Chaque évaluation est retrouvable avec ses paramètres, ses métriques et ses réponses. |
+
 ## Stack technique
 
-Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · FastAPI · Streamlit · Docker · GitHub Actions
+Python · PyMuPDF · pandas · LlamaIndex · LangGraph · Ollama · MLflow · FastAPI · Streamlit · pytest · ruff · Docker · GitHub Actions
 
-## Feuille de route
+## Pistes d'amélioration
 
-- [x] Corpus, extraction du texte et découpage en articles
-- [x] RAG simple avec citation des sources
-- [x] Jeu de questions de test et évaluation de référence
-- [x] Système multi-agents (chercheur, rédacteur, vérificateur)
-- [x] Comparaison RAG simple / multi-agents
-- [x] Suivi des expériences avec MLflow
-- [x] API FastAPI et interface Streamlit
-- [x] Conteneurisation Docker et intégration continue
+- Agrandir le jeu de questions, avec plusieurs relecteurs, pour détecter des écarts plus faibles entre les systèmes.
+- Évaluer des modèles plus grands, en particulier pour le vérificateur, où `qwen3:8b` donne déjà un signal plus fiable.
+- Ajouter une recherche hybride (mots-clés et vecteurs) et un reclassement des passages.
+- Répéter chaque évaluation plusieurs fois pour mesurer la variabilité due au GPU.
+- Diffuser la réponse au fur et à mesure de sa génération dans l'interface.
+- Étendre le corpus à d'autres textes européens (DSA, DMA, Data Act).

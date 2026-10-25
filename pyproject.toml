@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "assistant-rag"
-version = "0.8.0"
+version = "1.0.0"
 description = "Assistant multi-agents de questions-réponses sur documents avec citation des sources"
 readme = "README.md"
 requires-python = ">=3.11"
